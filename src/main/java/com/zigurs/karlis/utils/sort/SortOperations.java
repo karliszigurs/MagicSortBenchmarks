@@ -1,9 +1,11 @@
-package com.zigurs.karlis.utils.search.bench;
+package com.zigurs.karlis.utils.sort;
 
-import com.zigurs.karlis.utils.MagicSort;
 import org.openjdk.jmh.annotations.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -15,8 +17,6 @@ import java.util.stream.Collectors;
 @Warmup(iterations = CommonParams.WARMUP_ITERATIONS, time = CommonParams.WARMUP_TIME, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = CommonParams.BENCHMARK_ITERATIONS, time = CommonParams.BENCHMARK_TIME, timeUnit = TimeUnit.SECONDS)
 public class SortOperations {
-
-    private final Comparator<Map.Entry<String, Double>> normalReverseComparator = (o1, o2) -> -o1.getValue().compareTo(o2.getValue());
 
     @State(Scope.Benchmark)
     public static class ListWrapper {
@@ -76,7 +76,7 @@ public class SortOperations {
         List<Map.Entry<String, Double>> list = MagicSort.sortAndLimitWithArray(
                 wrapper.testList,
                 wrapper.maxItems,
-                normalReverseComparator
+                (o1, o2) -> -o1.getValue().compareTo(o2.getValue())
         );
 
         if (list.get(0).getValue() != wrapper.listSize)
@@ -90,8 +90,30 @@ public class SortOperations {
         List<Map.Entry<String, Double>> list = MagicSort.sortAndLimitWithArrayAndBinarySearch(
                 wrapper.testList,
                 wrapper.maxItems,
-                normalReverseComparator
+                (o1, o2) -> -o1.getValue().compareTo(o2.getValue())
         );
+
+        if (list.get(0).getValue() != wrapper.listSize)
+            throw new IllegalStateException("Unexpected sort result: " + list.get(0).getValue());
+
+        return true;
+    }
+
+    @Benchmark
+    public boolean parallelSortArrayBinarySearch(ListWrapper wrapper) {
+        List<Map.Entry<String, Double>> list = wrapper.testList.parallelStream()
+                .collect(MagicSort.toList(wrapper.maxItems, (o1, o2) -> -o1.getValue().compareTo(o2.getValue())));
+
+        if (list.get(0).getValue() != wrapper.listSize)
+            throw new IllegalStateException("Unexpected sort result: " + list.get(0).getValue());
+
+        return true;
+    }
+
+    @Benchmark
+    public boolean streamArrayBinarySearch(ListWrapper wrapper) {
+        List<Map.Entry<String, Double>> list = wrapper.testList.stream()
+                .collect(MagicSort.toList(wrapper.maxItems, (o1, o2) -> -o1.getValue().compareTo(o2.getValue())));
 
         if (list.get(0).getValue() != wrapper.listSize)
             throw new IllegalStateException("Unexpected sort result: " + list.get(0).getValue());
@@ -103,7 +125,7 @@ public class SortOperations {
     public boolean streamSort(ListWrapper wrapper) {
         List<Map.Entry<String, Double>> list = wrapper.testList.stream()
                 .filter(i -> i != null)
-                .sorted(normalReverseComparator)
+                .sorted((o1, o2) -> -o1.getValue().compareTo(o2.getValue()))
                 .limit(wrapper.maxItems)
                 .collect(Collectors.toList());
 
@@ -117,7 +139,7 @@ public class SortOperations {
     public boolean parallelSort(ListWrapper wrapper) {
         List<Map.Entry<String, Double>> list = wrapper.testList.parallelStream()
                 .filter(i -> i != null)
-                .sorted(normalReverseComparator)
+                .sorted((o1, o2) -> -o1.getValue().compareTo(o2.getValue()))
                 .limit(wrapper.maxItems)
                 .collect(Collectors.toList());
 

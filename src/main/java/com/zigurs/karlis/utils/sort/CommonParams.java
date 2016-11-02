@@ -1,4 +1,4 @@
-package com.zigurs.karlis.utils.search.bench;
+package com.zigurs.karlis.utils.sort;
 
 public class CommonParams {
 
