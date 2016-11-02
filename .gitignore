@@ -1,0 +1,4 @@
+/target
+/.idea
+/magicsortbenchmarks.iml
+*.sh
