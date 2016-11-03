@@ -83,22 +83,8 @@ public class SortOperations {
     }
 
     @Benchmark
-    public boolean partialSortInsertion(ListWrapper wrapper) {
-        List<Map.Entry<String, Double>> list = MagicSort.sortAndLimitWithArray(
-                wrapper.testList,
-                wrapper.maxItems,
-                (e1, e2) -> -e1.getValue().compareTo(e2.getValue())
-        );
-
-        if (list.get(0).getValue() != wrapper.listSize)
-            throw new IllegalStateException("Unexpected sort result: " + list.get(0).getValue());
-
-        return true;
-    }
-
-    @Benchmark
-    public boolean partialSortBSearch(ListWrapper wrapper) {
-        List<Map.Entry<String, Double>> list = MagicSort.sortAndLimitWithArray(
+    public boolean partialSort(ListWrapper wrapper) {
+        List<Map.Entry<String, Double>> list = MagicSort.sortAndLimit(
                 wrapper.testList,
                 wrapper.maxItems,
                 (e1, e2) -> -e1.getValue().compareTo(e2.getValue())
