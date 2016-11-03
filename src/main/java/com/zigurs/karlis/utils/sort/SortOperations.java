@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@Threads(1) /* leave a few cores unused for parallel sort to have free space */
+@Threads(1) /* leave a few cores unused for parallel sorts to have free space to play */
 @Fork(CommonParams.FORKS)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -21,6 +21,8 @@ public class SortOperations {
         private static final String ARRAY = "ArrayShuffled";
         private static final String LINKED = "LinkedListShuffled";
         private static final String LINKED_SORTED = "LinkedListSorted";
+
+        private final Comparator<Map.Entry<String, Double>> comparator = (e1, e2) -> -e1.getValue().compareTo(e2.getValue());
 
         private List<Map.Entry<String, Double>> testList = null;
 
@@ -83,11 +85,11 @@ public class SortOperations {
     }
 
     @Benchmark
-    public boolean partialSort(ListWrapper wrapper) {
+    public boolean magicSort(ListWrapper wrapper) {
         List<Map.Entry<String, Double>> list = MagicSort.sortAndLimit(
                 wrapper.testList,
                 wrapper.maxItems,
-                (e1, e2) -> -e1.getValue().compareTo(e2.getValue())
+                wrapper.comparator
         );
 
         if (list.get(0).getValue() != wrapper.listSize)
@@ -97,9 +99,14 @@ public class SortOperations {
     }
 
     @Benchmark
-    public boolean partialSortStream(ListWrapper wrapper) {
+    public boolean magicSortStream(ListWrapper wrapper) {
         List<Map.Entry<String, Double>> list = wrapper.testList.stream()
-                .collect(MagicSort.toList(wrapper.maxItems, (e1, e2) -> -e1.getValue().compareTo(e2.getValue())));
+                .collect(
+                        MagicSort.toList(
+                                wrapper.maxItems,
+                                wrapper.comparator
+                        )
+                );
 
         if (list.get(0).getValue() != wrapper.listSize)
             throw new IllegalStateException("Unexpected sort result: " + list.get(0).getValue());
@@ -108,9 +115,14 @@ public class SortOperations {
     }
 
     @Benchmark
-    public boolean partialSortParallelStream(ListWrapper wrapper) {
+    public boolean magicSortParallelStream(ListWrapper wrapper) {
         List<Map.Entry<String, Double>> list = wrapper.testList.parallelStream()
-                .collect(MagicSort.toList(wrapper.maxItems, (e1, e2) -> -e1.getValue().compareTo(e2.getValue())));
+                .collect(
+                        MagicSort.toList(
+                                wrapper.maxItems,
+                                wrapper.comparator
+                        )
+                );
 
         if (list.get(0).getValue() != wrapper.listSize)
             throw new IllegalStateException("Unexpected sort result: " + list.get(0).getValue());
@@ -122,7 +134,7 @@ public class SortOperations {
     public boolean streamSort(ListWrapper wrapper) {
         List<Map.Entry<String, Double>> list = wrapper.testList.stream()
                 .filter(i -> i != null)
-                .sorted((o1, o2) -> -o1.getValue().compareTo(o2.getValue()))
+                .sorted(wrapper.comparator)
                 .limit(wrapper.maxItems)
                 .collect(Collectors.toList());
 
@@ -133,10 +145,10 @@ public class SortOperations {
     }
 
     @Benchmark
-    public boolean parallelSort(ListWrapper wrapper) {
+    public boolean streamParallelSort(ListWrapper wrapper) {
         List<Map.Entry<String, Double>> list = wrapper.testList.parallelStream()
                 .filter(i -> i != null)
-                .sorted((o1, o2) -> -o1.getValue().compareTo(o2.getValue()))
+                .sorted(wrapper.comparator)
                 .limit(wrapper.maxItems)
                 .collect(Collectors.toList());
 
@@ -148,7 +160,10 @@ public class SortOperations {
 
     @Benchmark
     public boolean collectionsSort(ListWrapper wrapper) {
-        Collections.sort(wrapper.testList, (e1, e2) -> -e1.getValue().compareTo(e2.getValue()));
+        Collections.sort(
+                wrapper.testList,
+                wrapper.comparator
+        );
 
         if (wrapper.testList.get(0).getValue() != wrapper.listSize)
             throw new IllegalStateException("Unexpected sort result: " + wrapper.testList.get(0).getValue());
