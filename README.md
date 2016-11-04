@@ -9,7 +9,7 @@ $ java -jar target/benchmarks.jar
 
 ## Result summaries
 
-* [04 November 2016 - MagicSort 0.2-SNAPSHOT](https://github.com/karliszigurs/MagicSortBenchmarks/blob/master/results/20161104-0.2-SNAPSHOT/summary.csv)
+* [04 November 2016 - MagicSort 0.2-SNAPSHOT](https://github.com/karliszigurs/MagicSortBenchmarks/blob/master/results/20161104-0.2-SNAPSHOT/summary.pdf)
 
 ### Credits
 
